@@ -1,0 +1,11 @@
+Package: rsimms
+Type: Package
+Title: Simulation of Multi-state model for survival data
+Version: 0.1.0
+Author: Carlos Serra
+Maintainer: The package maintainer <carlos.serra91@gmail.com>
+Description: The package is built on the package simsurv to simulate survival data in a multi-state model.
+License: GNU
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
