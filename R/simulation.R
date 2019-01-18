@@ -1,3 +1,43 @@
+#' Simulate multi-state survival data
+#' @export
+rsimms <- function(lambdas01, gammas01, beta01 = 0, covs, maxt = 50, lambdas02, gammas02, beta02 = 0, lambdas12, gammas12, beta12 = 0){
+  s1 <- simsurv(lambdas = lambdas01, gammas = gammas01,
+                x = covs, maxt = maxt, betas = beta01)
+  head(s1)
+  
+  colnames(s1)[2:3] <- c("yr", "dr")
+  
+  # simulate non-terminal event
+  s2 <- simsurv(lambdas = lambdas02, gammas = gammas02,
+                x = covs, maxt = maxt, betas = beta02)
+  head(s2)
+  colnames(s2)[2:3] <- c("yt", "dt")
+  # s2 and s1
+  s <- dplyr::left_join(s1, s2)
+  
+  s$ostime <- with(s, pmin(yt, yr))
+  s$dftime <- with(s, pmin(yt, yr))
+  s$osevent <- s$dt
+  s$osevent[s$ostime == s$yr] <- 0
+  s$dfevent <- s$dr
+  s$dfevent[s$dftime == s$yt] <- 0
+  
+  
+  covs3 <- covs[s$dfevent == 1, ]
+  
+  s3 <- simsurv(lambdas = lambdas12, gammas = gammas12,
+                x = covs3, maxt = maxt, betas = beta12)
+  head(s3)
+  colnames(s2)[2:3] <- c("yt", "dt")
+  s$ostime[s$dfevent == 1] <- s3$eventtime + s$ostime[s$dfevent == 1]
+  s$osevent[s$dfevent == 1] <- s3$status
+  
+  s$trt <- covs$trt
+  ms_data$timediff <- ms_data$ostime - ms_data$dftime 
+  return(ms_data)
+}
+
+
 #' Simulate survival data
 #'
 #' Simulate survival times from standard parametric survival distributions,
@@ -1030,42 +1070,4 @@ get_quadpoints <- function(nodes = 15) {
         0.268488089868333440729,
         0.104656226026467265194))
   } else stop("'nodes' must be either 7, 11 or 15.")
-}
-
-#' @export
-rsimms <- function(lambdas01, gammas01, beta01 = 0, covs, maxt = 50, lambdas02, gammas02, beta02 = 0, lambdas12, gammas12, beta12 = 0){
-  s1 <- simsurv(lambdas = lambdas01, gammas = gammas01,
-                x = covs, maxt = maxt, betas = beta01)
-  head(s1)
-  
-  colnames(s1)[2:3] <- c("yr", "dr")
-  
-  # simulate non-terminal event
-  s2 <- simsurv(lambdas = lambdas02, gammas = gammas02,
-                x = covs, maxt = maxt, betas = beta02)
-  head(s2)
-  colnames(s2)[2:3] <- c("yt", "dt")
-  # s2 and s1
-  s <- dplyr::left_join(s1, s2)
-  
-  s$ostime <- with(s, pmin(yt, yr))
-  s$dftime <- with(s, pmin(yt, yr))
-  s$osevent <- s$dt
-  s$osevent[s$ostime == s$yr] <- 0
-  s$dfevent <- s$dr
-  s$dfevent[s$dftime == s$yt] <- 0
-  
-  
-  covs3 <- covs[s$dfevent == 1, ]
-  
-  s3 <- simsurv(lambdas = lambdas12, gammas = gammas12,
-                x = covs3, maxt = maxt, betas = beta12)
-  head(s3)
-  colnames(s2)[2:3] <- c("yt", "dt")
-  s$ostime[s$dfevent == 1] <- s3$eventtime + s$ostime[s$dfevent == 1]
-  s$osevent[s$dfevent == 1] <- s3$status
-  
-  s$trt <- covs$trt
-  ms_data$timediff <- ms_data$ostime - ms_data$dftime 
-  return(ms_data)
 }
